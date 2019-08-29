@@ -23,14 +23,33 @@ def ConnectToDB():
 		exit()
 
 
+def PrintFluxesFields(fluxes, forecastTime):
+	fluxesFileNamePrefix = forecastTime.strftime("%Y%m%d-%H:%M:%S")
+	diffFileName = fluxesFileNamePrefix + "-diffusal.txt"
+	monoFileName = fluxesFileNamePrefix + "-mono.txt"
+	waveFileName = fluxesFileNamePrefix + "-wave.txt"
+
+	np.savetxt(diffFileName, fluxes[0], fmt="%6.4f")
+	np.savetxt(monoFileName, fluxes[1], fmt="%6.4f")
+	np.savetxt(waveFileName, fluxes[2], fmt="%6.4f")
+
 def SaveToDatabase(forecast_dt, processing_dt, poleward, equatorward, diffuse):
+	print("Save to database:")
+	print("Forecast time:   " + str(forecast_dt))
+	print("Processing time: " + str(processing_dt))
+	print("Poleward:        " + str(poleward))
+	print("Equatorward:     " + str(equatorward))
+	print("Diffuse:         " + str(diffuse))
+	print("------")
+
 	forecast_dt = forecast_dt.strftime("%Y-%m-%d %H:%M:%S")
 	processing_dt = processing_dt.strftime("%Y-%m-%d %H:%M:%S")
-	query = "REPLACE INTO `oval_forecast_ovation` (`forecast_dt`, `processing_dt`, `al_index`, `poleward`, `equatorward`, `diffuse`, `processed`) VALUES ('{}', '{}', '0', '{}', '{}', '{}', '1')".\
+	query = "REPLACE INTO `oval_forecast_ovation` (`forecast_dt`, `processing_dt`, `al_index`, `poleward`, `equatorward`, `diffuse`, `processed`) VALUES ('{}', '{}', '0', '{}', '{}', '{}', '0')".\
 		format(forecast_dt, processing_dt, poleward, equatorward, diffuse)
 	cursor = conn.cursor()
 	cursor.execute(query)
 	conn.commit()
+
 	print("Successfully saved to DB!")
 
 
@@ -84,7 +103,8 @@ def __getPlasmaData(dt):
 	row = cursor.fetchone()
 	speeds = []
 	while row:
-		speeds.append(row[2])
+		if row[2] is not None:
+			speeds.append(row[2])
 		row = cursor.fetchone()
 
 	return sum(speeds) / len(speeds)

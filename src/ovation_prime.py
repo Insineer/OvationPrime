@@ -3,10 +3,7 @@ from scipy import interpolate
 
 from ovation_utilities import *
 
-#Determine where this module's source file is located
-#to determine where to look for the tables
-src_file_dir = os.path.dirname(os.path.realpath(__file__))
-ovation_datadir = os.path.join(src_file_dir,'data')
+ovation_datadir = os.path.join(os.getcwd(), '../data')
 
 class FluxEstimator(object):
 	"""

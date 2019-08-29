@@ -2,19 +2,24 @@ import ovation_prime
 from ovation_utilities import *
 import datetime
 
-def process(datetimes):
+def getNextForecastDatetime():
+    now = datetime.datetime.utcnow()
+    previousHour = now.replace(minute=0, second=0, microsecond=0)
+    return previousHour + datetime.timedelta(hours=1)
+
+def process(forecastDatetimes):
     ConnectToDB()
 
     estimators = [ovation_prime.FluxEstimator(tp) for tp in ["diff", "mono", "wave"]]
 
-    for dt in datetimes:
-        print("Forecast for " + str(dt))
+    for forecastTime in forecastDatetimes:
+        print("Forecast for " + str(forecastTime))
 
-        dt -= datetime.timedelta(minutes=55)
+        currentTime = forecastTime - datetime.timedelta(minutes=55)
 
         fluxes = []
         for estimator in estimators:
-            mlatGrid, mltGrid, fluxGrid = estimator.get_flux_for_time(dt)
+            mlatGrid, mltGrid, fluxGrid = estimator.get_flux_for_time(currentTime)
             fluxes.append(fluxGrid)
 
         poleward = []
@@ -75,15 +80,18 @@ def process(datetimes):
         equatorward = ' '.join(str(a) for a in equatorward)
         diff = ' '.join(str(a) for a in diff)
 
-        SaveToDatabase(dt + datetime.timedelta(minutes=55), dt, poleward, equatorward, diff)
+        PrintFluxesFields(fluxes, forecastTime)
+        SaveToDatabase(forecastTime, currentTime, poleward, equatorward, diff)
 
 
 def main():
-    datetimes = []
-    for day in range(1, 8):
-        for hour in range (0, 24):
-            datetimes.append(datetime.datetime(2019,4,day,hour,0,0))
-    process(datetimes)
+    print("Inited")
+    # datetimes = []
+    # for day in range(1, 2):
+    #     for hour in range (0, 1):
+    #         datetimes.append(datetime.datetime(2019,4,day,hour,0,0))
+    # process(datetimes)
+    process([getNextForecastDatetime()])
 
 if __name__ == "__main__":
     main()
