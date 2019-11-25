@@ -23,6 +23,23 @@ def process(forecastDatetimes):
             fluxes.append(fluxGrid)
 
         poleward = []
+        f = open('bound.txt', 'w')
+        f.write('mlt mlat bound avg \n')
+        f1 = open('avg.dat', 'w')
+        f1.write('mlt mlat 90-mlat mlat_grid_res mlt_grid_res avg \n')
+        #AvgMas=[][]
+        for mlt in range(0, 24):
+            for mlat in range(0, 40):
+                mlat_grid_res = (40 - mlat) * 2 - 1 # from north to south
+                mlt_grid_res = mlt * 4
+                avg = 0
+                for dmlt in range(0, 4):
+                    for dmlat in range(0, 2):
+                        avg += fluxes[1][mlat_grid_res - dmlat][mlt_grid_res + dmlt]
+                        avg += fluxes[2][mlat_grid_res - dmlat][mlt_grid_res + dmlt]
+                avg /= 8 * 2
+                print(mlt, mlat, 90-mlat, mlat_grid_res, mlt_grid_res, avg, file=f1)
+
         lst_bound = None
         for mlt in range(0, 24):
             bound = None
@@ -35,14 +52,25 @@ def process(forecastDatetimes):
                         avg += fluxes[1][mlat_grid_res - dmlat][mlt_grid_res + dmlt]
                         avg += fluxes[2][mlat_grid_res - dmlat][mlt_grid_res + dmlt]
                 avg /= 8 * 2
-                if bound is None and avg >= 0.2:
+    #            print(mlt, mlat, avg,file=f1)
+                if bound is None and avg >= 0.25:
                     bound = 90 - mlat
+                    #f.write(mlt, mlat, bound, avg,'\n')
+                    #f = open('bound.txt', 'a')
+                    print(mlt, mlat, bound, avg,file=f)
+                    #f.close()
                     break
                 if mlat == 39:
                     bound = lst_bound
+                    #f = open('bound.txt', 'a')
+                    print(mlt, mlat, bound, avg,file=f)
+                    #f.close()
             lst_bound = bound
             poleward.append(bound)
+            
 
+        f.close()
+        f1.close()
         equatorward = []
         diff = []
         eq_lst_bound = None
@@ -62,9 +90,9 @@ def process(forecastDatetimes):
                         avg_diff += fluxes[0][mlat_grid_res + dmlat][mlt_grid_res + dmlt]
                 avg_accelerated /= 8 * 2
                 avg_diff /= 8
-                if eq_bound is None and avg_accelerated >= 0.2:
+                if eq_bound is None and avg_accelerated >= 0.25:
                     eq_bound = mlat + 50
-                if diff_bound is None and avg_diff >= 0.2:
+                if diff_bound is None and avg_diff >= 0.3:
                     diff_bound = mlat + 50
                 if mlat == 39:
                     if diff_bound is None:
