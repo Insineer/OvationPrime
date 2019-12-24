@@ -36,7 +36,7 @@ class FluxEstimator(object):
 			gridmlts = gridmltsN
 		return gridmlats, gridmlts, seasonfluxesN, seasonfluxesS
 
-	def get_flux_for_time(self, dt, hemisphere='N', combine_hemispheres=True):
+	def get_flux_for_time(self, dt, solarwind, hemisphere='N', combine_hemispheres=True):
 		yday = dt.timetuple().tm_yday
 
 		if hemisphere == 'N':
@@ -45,8 +45,6 @@ class FluxEstimator(object):
 			weights = self.season_weights(365 - yday)
 		else:
 			raise ValueError('Invalid hemisphere %s (use N or S)' % hemisphere)
-
-		solarwind = CalculateSolarWindCouplingFunc(dt)
 
 		season_fluxes_outs = self.get_season_fluxes(solarwind)
 		grid_mlats, grid_mlts, seasonfluxesN, seasonfluxesS = season_fluxes_outs

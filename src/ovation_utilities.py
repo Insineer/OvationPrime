@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 import mysql.connector
 import datetime
 
@@ -32,6 +35,41 @@ def PrintFluxesFields(fluxes, forecastTime):
 	np.savetxt(diffFileName, fluxes[0], fmt="%6.4f")
 	np.savetxt(monoFileName, fluxes[1], fmt="%6.4f")
 	np.savetxt(waveFileName, fluxes[2], fmt="%6.4f")
+
+def DrawPlot(flux, poleward, equatorward, forecastTime):
+	theta = np.linspace(0, 24, 96) / 24 * 2 * np.pi
+	r = np.linspace(0, 40, 80)
+	theta, r = np.meshgrid(theta, r)
+
+	thetaForBorders = np.arange(0, 24, 1) / 24 * 2 * np.pi
+	poleward = [90 - i for i in poleward]
+	equatorward = [90 - i for i in equatorward]
+
+	ax = plt.subplot(111, polar = True)
+
+	ax.set_theta_zero_location("N")
+	ax.set_theta_direction(-1)
+	ax.set_rlabel_position(90)
+
+	xticks = [i * 2 / 24 * 2 * np.pi for i in range(0, 12)]
+	ax.set_xticks(xticks)
+	ax.set_xticklabels([int(i / 2 / np.pi * 24) for i in xticks], color='black', fontsize=8)
+
+	yticks = [0, 10, 20, 30]
+	ax.set_yticks(yticks)
+	ax.set_yticklabels([90 - i for i in yticks], color='#AAAAAA', fontsize=8)
+
+	ctf = ax.pcolormesh(theta, r, flux, cmap = 'plasma')
+	cbar = plt.colorbar(ctf, extend="max", label="aurorae power", shrink=0.5)
+	cbar.minorticks_on()
+
+	ax.plot(thetaForBorders, poleward)
+	ax.plot(thetaForBorders, equatorward)
+
+	ax.grid(True, color='#666666')
+
+	fluxesFileNamePrefix = forecastTime.strftime("%Y%m%d-%H:%M:%S")
+	plt.savefig(fluxesFileNamePrefix + '-acceleratedFluxes.png')
 
 def SaveToDatabase(forecast_dt, processing_dt, poleward, equatorward, diffuse):
 	print("Save to database:")
@@ -141,3 +179,8 @@ def CalculateSolarWindCouplingFunc(dt):
 	plasmaSpeed = __getPlasmaData(dt)
 
 	return __couplingFunc((magX, magY, magZ), plasmaSpeed)
+
+def GetNextForecastDatetime():
+	now = datetime.datetime.utcnow()
+	previousHour = now.replace(minute=0, second=0, microsecond=0)
+	return previousHour + datetime.timedelta(hours=1)
